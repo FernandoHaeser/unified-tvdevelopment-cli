@@ -11,13 +11,19 @@ async function getLatestVersion(): Promise<string> {
   try {
     const res = await fetch(
       'https://api.github.com/repos/tvdev-cli/tvdev-cli/releases/latest',
-      { next: { revalidate: 3600 } }
+      {
+        headers: {
+          Accept: 'application/vnd.github+json',
+          'X-GitHub-Api-Version': '2022-11-28',
+        },
+        cache: 'force-cache',
+      }
     )
-    if (!res.ok) return 'v1.0.0'
+    if (!res.ok) return ''
     const data = await res.json()
-    return data.tag_name ?? 'v1.0.0'
+    return (data.tag_name as string) ?? ''
   } catch {
-    return 'v1.0.0'
+    return ''
   }
 }
 
