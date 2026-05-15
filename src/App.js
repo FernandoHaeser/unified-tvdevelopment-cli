@@ -66,7 +66,6 @@ export default function App() {
       }
     } else {
       if (key.escape) setSidebarFocused(true);
-      if (key.tab)    setSidebarFocused(true);
       if (input === 'q') { exit(); return; }
     }
   });

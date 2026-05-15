@@ -195,9 +195,6 @@ export default function Devices({ focused, platform, onDeviceChange }) {
                 <TextInput
                   value={form[field] ?? ''}
                   onChange={v => setForm(f => ({ ...f, [field]: v }))}
-                  onSubmit={() => {
-                    if (formField < fields.length - 1) setFormField(f => f + 1);
-                  }}
                   placeholder={field === 'port' ? (platform === 'tizen' ? '26101' : '5555') : `Enter ${field}...`}
                 />
               ) : (

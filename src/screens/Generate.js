@@ -163,9 +163,6 @@ export default function Generate({ focused, platform }) {
                 <TextInput
                   value={form[field] ?? ''}
                   onChange={v => setForm(f => ({ ...f, [field]: v }))}
-                  onSubmit={() => {
-                    if (fieldIdx < fields.length - 1) setFieldIdx(f => f + 1);
-                  }}
                   placeholder={FIELD_DEFAULTS[platform]?.[field] ?? field}
                 />
               ) : (

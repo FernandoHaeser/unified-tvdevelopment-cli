@@ -109,7 +109,6 @@ export default function Transfer({ focused, currentDevice, platform }) {
             <TextInput
               value={src}
               onChange={setSrc}
-              onSubmit={() => setStep(STEP.DEST)}
               placeholder={isPush ? './local/file.txt' : '/data/file.txt'}
             />
           </Box>
@@ -125,7 +124,6 @@ export default function Transfer({ focused, currentDevice, platform }) {
             <TextInput
               value={dest}
               onChange={setDest}
-              onSubmit={runTransfer}
               placeholder={isPush ? '/data/file.txt' : './local/file.txt'}
             />
           </Box>

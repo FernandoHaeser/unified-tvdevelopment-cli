@@ -119,7 +119,6 @@ export default function Build({ focused, platform }) {
             <TextInput
               value={projDir}
               onChange={setProjDir}
-              onSubmit={runBuild}
               placeholder="."
             />
           </Box>

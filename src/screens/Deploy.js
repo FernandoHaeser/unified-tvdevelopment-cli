@@ -154,7 +154,6 @@ export default function Deploy({ focused, currentDevice, platform }) {
               <TextInput
                 value={srcPath}
                 onChange={setSrcPath}
-                onSubmit={() => needsPkg ? setInputField(1) : runDeploy()}
                 placeholder={needsPkg ? './myapp' : './app.apk'}
               />
             ) : (
@@ -168,7 +167,6 @@ export default function Deploy({ focused, currentDevice, platform }) {
                 <TextInput
                   value={outDir}
                   onChange={setOutDir}
-                  onSubmit={runDeploy}
                   placeholder="./dist"
                 />
               ) : (
