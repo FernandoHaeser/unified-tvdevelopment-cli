@@ -1,6 +1,6 @@
 {
   "name": "unified-tvdevelopment-cli",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Universal TUI manager for Smart TV development — LG webOS, Samsung Tizen, Amazon Fire TV, Android TV",
   "type": "module",
   "bin": {

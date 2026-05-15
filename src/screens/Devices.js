@@ -89,26 +89,40 @@ export default function Devices({ focused, platform, onDeviceChange }) {
 
     if (mode === MODES.ADD) {
       if (key.escape) { setMode(MODES.LIST); return; }
-      if (key.tab || key.return) {
-        if (formField < fields.length - 1) {
-          setFormField(f => f + 1);
-        } else {
-          setWorking(true);
-          try {
-            if (platform === 'webos') {
-              await utils.addDevice(form);
-              setStatus({ ok: true, msg: `Device '${form.name}' added` });
-            } else {
-              const out = await utils.connectDevice({ host: form.host, port: parseInt(form.port) || undefined });
-              setStatus({ ok: true, msg: out || `Connected to ${form.host}:${form.port}` });
-            }
-            await load();
-            setMode(MODES.LIST);
-          } catch (e) {
-            setStatus({ ok: false, msg: e.message });
+
+      const goBack = (key.upArrow) || (key.shift && key.tab);
+      const goNext = !goBack && (key.tab || (key.return && formField < fields.length - 1));
+      const submit = !goBack && key.return && formField === fields.length - 1;
+
+      if (goBack) {
+        setFormField(f => Math.max(0, f - 1));
+        return;
+      }
+      if (goNext) {
+        setFormField(f => Math.min(fields.length - 1, f + 1));
+        return;
+      }
+      if (submit) {
+        const missingName = platform === 'webos' && !form.name.trim();
+        const missingHost = !form.host.trim();
+        if (missingName) { setStatus({ ok: false, msg: 'Name is required' }); return; }
+        if (missingHost)  { setStatus({ ok: false, msg: 'Host is required' }); return; }
+
+        setWorking(true);
+        try {
+          if (platform === 'webos') {
+            await utils.addDevice(form);
+            setStatus({ ok: true, msg: `Device '${form.name}' added` });
+          } else {
+            const out = await utils.connectDevice({ host: form.host, port: parseInt(form.port) || undefined });
+            setStatus({ ok: true, msg: out || `Connected to ${form.host}:${form.port}` });
           }
-          setWorking(false);
+          await load();
+          setMode(MODES.LIST);
+        } catch (e) {
+          setStatus({ ok: false, msg: e.message });
         }
+        setWorking(false);
       }
     }
 
@@ -202,7 +216,7 @@ export default function Devices({ focused, platform, onDeviceChange }) {
               )}
             </Box>
           ))}
-          <Text dimColor>Tab/Enter next  Last field Enter submits  Esc cancel</Text>
+          <Text dimColor>Tab/↓ next  ↑ back  Last field Enter submits  Esc cancel</Text>
         </Box>
       )}
 
