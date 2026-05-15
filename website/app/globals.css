@@ -1,0 +1,53 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #06060f;
+  --card: #0e0e1c;
+  --elevated: #141428;
+  --border: rgba(99, 102, 241, 0.18);
+  --border-strong: rgba(99, 102, 241, 0.35);
+  --indigo: #6366f1;
+  --indigo-light: #818cf8;
+  --indigo-dim: rgba(99, 102, 241, 0.12);
+  --text: #e2e4f0;
+  --text-muted: #8b8fa8;
+  --text-dim: #545770;
+  --green: #22c55e;
+  --amber: #f59e0b;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  overflow-x: hidden;
+}
+
+@layer components {
+  .btn-fill {
+    @apply inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-indigo-500 text-white font-semibold text-sm border border-indigo-500 transition-all duration-150 hover:bg-indigo-400 hover:border-indigo-400 hover:-translate-y-px;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-transparent text-[var(--text-muted)] font-semibold text-sm border border-[var(--border-strong)] transition-all duration-150 hover:text-[var(--text)] hover:border-indigo-500 hover:bg-[var(--indigo-dim)] hover:-translate-y-px;
+  }
+  .terminal-window {
+    @apply rounded-2xl overflow-hidden font-mono text-sm leading-7;
+    background: #0d1117;
+    border: 1px solid var(--border-strong);
+  }
+  .section-label {
+    @apply text-center font-mono text-xs tracking-widest uppercase mb-3;
+    color: var(--text-dim);
+  }
+  .feature-card:hover {
+    border-color: var(--border-strong) !important;
+  }
+  .footer-link:hover {
+    color: var(--text) !important;
+  }
+}
