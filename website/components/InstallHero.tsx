@@ -11,7 +11,7 @@ const NPM_CMD = 'npm install -g unified-tvdevelopment-cli'
 
 const checks = [
   'Installs Node.js automatically if missing',
-  'Installs tvdev globally via npm',
+  'Downloads binary from latest GitHub release',
   'Configures PATH — no manual setup',
   'Idempotent — run again to update',
 ]
@@ -126,17 +126,16 @@ export default function InstallHero() {
             <p className="text-xs" style={{ color: 'var(--text-dim)' }}>
               {beta && (
                 <>
-                  Installs latest{' '}
+                  Installs latest pre-release from{' '}
                   <a
-                    href="https://www.npmjs.com/package/unified-tvdevelopment-cli?activeTab=versions"
+                    href="https://github.com/tvdev-cli/tvdev-cli/releases"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="underline hover:text-indigo-400"
                     style={{ color: 'var(--indigo-light)' }}
                   >
-                    beta version
-                  </a>{' '}
-                  from npm
+                    GitHub releases
+                  </a>
                 </>
               )}
             </p>
