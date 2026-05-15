@@ -205,22 +205,62 @@ if (Test-Command $Bin) {
   Write-Warn "$Bin not in PATH for this session — restart terminal to use it"
 }
 
-# ── Platform tools (optional) ─────────────────────────────────────────────────
-Write-Step "Checking platform-specific tools"
+# ── Platform tools ────────────────────────────────────────────────────────────
+Write-Step "Checking and installing platform-specific tools"
 
-function Check-Tool {
-  param([string]$Cmd, [string]$Label, [string]$Hint)
-  if (Test-Command $Cmd) {
-    Write-Ok "$Label"
-  } else {
-    Write-Warn "$Label not found — $Hint"
+function Install-NpmPackage {
+  param([string]$Package, [string]$Label)
+  Write-Info "Installing $Label via npm..."
+  try {
+    npm install -g $Package 2>&1 | Where-Object { $_ -notmatch "^npm warn" -and $_.Trim() -ne "" }
+    Write-Ok "$Label installed"
+  } catch {
+    Write-Warn "$Label install failed — run manually: npm install -g $Package"
   }
 }
 
-Check-Tool "ares-setup-device" "ares-cli  (LG webOS)"          "npm install -g @webosose/ares-cli"
-Check-Tool "sdb"               "sdb       (Samsung Tizen)"      "install Tizen Studio: developer.samsung.com/smarttv"
-Check-Tool "adb"               "adb       (Fire TV/Android TV)" "install Android SDK Platform Tools"
-Check-Tool "inputd-cli"        "inputd-cli (Fire TV input)"     "optional — Fire TV remote input simulation"
+function Install-AdbViaWinget {
+  Write-Info "Installing adb via winget (Android Platform Tools)..."
+  try {
+    winget install --id Google.PlatformTools --accept-source-agreements --accept-package-agreements --silent
+    $env:PATH = [Environment]::GetEnvironmentVariable("PATH", "Machine") + ";" +
+                [Environment]::GetEnvironmentVariable("PATH", "User")
+    Write-Ok "adb (Fire TV/Android TV) installed"
+  } catch {
+    Write-Warn "winget adb install failed — install Android SDK Platform Tools: https://developer.android.com/studio/releases/platform-tools"
+  }
+}
+
+# ares-cli (LG webOS) — auto-install via npm
+if (Test-Command "ares-setup-device") {
+  Write-Ok "ares-cli  (LG webOS) — found"
+} else {
+  Write-Warn "ares-cli (LG webOS) not found — installing..."
+  Install-NpmPackage "@webosose/ares-cli" "ares-cli"
+}
+
+# sdb (Samsung Tizen) — requires Tizen Studio GUI installer, warn only
+if (Test-Command "sdb") {
+  Write-Ok "sdb       (Samsung Tizen) — found"
+} else {
+  Write-Warn "sdb (Samsung Tizen) not found — requires Tizen Studio: https://developer.samsung.com/smarttv"
+}
+
+# adb (Fire TV / Android TV) — auto-install via winget
+if (Test-Command "adb") {
+  Write-Ok "adb       (Fire TV/Android TV) — found"
+} else {
+  Write-Warn "adb (Fire TV/Android TV) not found — installing..."
+  Install-AdbViaWinget
+}
+
+# inputd-cli (optional Fire TV input simulation) — auto-install via npm
+if (Test-Command "inputd-cli") {
+  Write-Ok "inputd-cli (Fire TV input) — found"
+} else {
+  Write-Warn "inputd-cli (Fire TV input) not found — installing..."
+  Install-NpmPackage "inputd-cli" "inputd-cli"
+}
 
 # ── Done ──────────────────────────────────────────────────────────────────────
 Write-Host ""
@@ -232,3 +272,15 @@ Write-Host ""
 Write-Host "  GitHub : https://github.com/tvdev-cli/tvdev-cli" -ForegroundColor DarkGray
 Write-Host "  npm    : https://npmjs.com/package/unified-tvdevelopment-cli" -ForegroundColor DarkGray
 Write-Host ""
+
+$currentPath = [Environment]::GetEnvironmentVariable("PATH", "User")
+if (-not ($currentPath -split ';' -contains $InstallDir)) {
+  Write-Host "  Tip: to make " -NoNewline -ForegroundColor Yellow
+  Write-Host "$Bin" -NoNewline -ForegroundColor Cyan
+  Write-Host " available in every new terminal, add this to your user PATH:" -ForegroundColor Yellow
+  Write-Host ""
+  Write-Host "    [Environment]::SetEnvironmentVariable('PATH', `$env:PATH + ';$InstallDir', 'User')" -ForegroundColor DarkGray
+  Write-Host ""
+  Write-Host "  Or restart your terminal — the installer already added it." -ForegroundColor DarkGray
+  Write-Host ""
+}

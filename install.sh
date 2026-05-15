@@ -208,22 +208,91 @@ else
   echo -e "\n    source $(detect_shell_rc)\n"
 fi
 
-# ── Platform tools (optional) ─────────────────────────────────────────────────
-step "Checking platform-specific tools"
+# ── Platform tools ────────────────────────────────────────────────────────────
+step "Checking and installing platform-specific tools"
 
-check_tool() {
-  local cmd=$1 label=$2 hint=$3
-  if command -v "$cmd" &>/dev/null; then
-    ok "${label} → $(command -v ${cmd})"
+install_ares_cli() {
+  info "Installing ares-cli via npm..."
+  if npm install -g @webosose/ares-cli 2>&1 | grep -v "^npm warn" | grep -v "^$"; then
+    ok "ares-cli (LG webOS) installed → $(command -v ares-setup-device 2>/dev/null || echo 'reload shell')"
   else
-    warn "${label} not found — ${hint}"
+    warn "ares-cli install failed — run manually: npm install -g @webosose/ares-cli"
   fi
 }
 
-check_tool ares-setup-device "ares-cli  (LG webOS)"          "npm install -g @webosose/ares-cli"
-check_tool sdb               "sdb       (Samsung Tizen)"      "install Tizen Studio: developer.samsung.com/smarttv"
-check_tool adb               "adb       (Fire TV/Android TV)" "brew install android-platform-tools  OR  Android Studio SDK"
-check_tool inputd-cli        "inputd-cli (Fire TV input)"     "optional — Fire TV remote input simulation"
+install_adb() {
+  if [[ "$(uname)" == "Darwin" ]]; then
+    if command -v brew &>/dev/null; then
+      info "Installing adb via Homebrew..."
+      if brew install --quiet android-platform-tools; then
+        ok "adb (Fire TV/Android TV) installed → $(command -v adb)"
+      else
+        warn "Homebrew adb install failed — install Android Studio SDK manually"
+      fi
+    else
+      warn "adb not found — install Homebrew first, then: brew install android-platform-tools"
+    fi
+  else
+    # Linux
+    if command -v apt-get &>/dev/null; then
+      info "Installing adb via apt..."
+      if sudo apt-get install -y -qq adb 2>/dev/null; then
+        ok "adb (Fire TV/Android TV) installed → $(command -v adb)"
+      else
+        warn "apt adb install failed — install Android SDK Platform Tools manually"
+      fi
+    elif command -v dnf &>/dev/null; then
+      info "Installing adb via dnf..."
+      if sudo dnf install -y -q android-tools 2>/dev/null; then
+        ok "adb (Fire TV/Android TV) installed → $(command -v adb)"
+      else
+        warn "dnf adb install failed — install Android SDK Platform Tools manually"
+      fi
+    else
+      warn "adb not found — install Android SDK Platform Tools: https://developer.android.com/studio/releases/platform-tools"
+    fi
+  fi
+}
+
+install_inputd_cli() {
+  info "Installing inputd-cli via npm..."
+  if npm install -g inputd-cli 2>&1 | grep -v "^npm warn" | grep -v "^$"; then
+    ok "inputd-cli (Fire TV input) installed"
+  else
+    warn "inputd-cli install failed — optional tool, skip if not needed"
+  fi
+}
+
+# ares-cli (LG webOS) — auto-install via npm
+if command -v ares-setup-device &>/dev/null; then
+  ok "ares-cli  (LG webOS) → $(command -v ares-setup-device)"
+else
+  warn "ares-cli (LG webOS) not found — installing..."
+  install_ares_cli
+fi
+
+# sdb (Samsung Tizen) — requires Tizen Studio GUI installer, warn only
+if command -v sdb &>/dev/null; then
+  ok "sdb       (Samsung Tizen) → $(command -v sdb)"
+else
+  warn "sdb (Samsung Tizen) not found — requires Tizen Studio: https://developer.samsung.com/smarttv"
+fi
+
+# adb (Fire TV / Android TV) — auto-install
+if command -v adb &>/dev/null; then
+  ok "adb       (Fire TV/Android TV) → $(command -v adb)"
+else
+  warn "adb (Fire TV/Android TV) not found — installing..."
+  install_adb
+fi
+
+# inputd-cli (optional Fire TV input simulation) — auto-install via npm
+if command -v inputd-cli &>/dev/null; then
+  ok "inputd-cli (Fire TV input) → $(command -v inputd-cli)"
+else
+  warn "inputd-cli (Fire TV input) not found — installing..."
+  install_inputd_cli
+fi
 
 # ── Done ──────────────────────────────────────────────────────────────────────
 echo ""
@@ -235,3 +304,12 @@ echo ""
 echo -e "  ${DIM}GitHub : https://github.com/tvdev-cli/tvdev-cli${RESET}"
 echo -e "  ${DIM}npm    : https://npmjs.com/package/unified-tvdevelopment-cli${RESET}"
 echo ""
+rc_tip=$(detect_shell_rc)
+if ! echo ":${PATH}:" | grep -q ":${INSTALL_DIR}:"; then
+  echo -e "  ${YELLOW}Tip:${RESET} to make ${BOLD}${INDIGO}${BIN}${RESET} available in every new terminal, add this to ${rc_tip}:"
+  echo ""
+  echo -e "    ${DIM}export PATH=\"\$PATH:${INSTALL_DIR}\"${RESET}"
+  echo ""
+  echo -e "  Then reload: ${DIM}source ${rc_tip}${RESET}"
+  echo ""
+fi
