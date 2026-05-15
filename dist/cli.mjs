@@ -41648,26 +41648,43 @@ function Devices({ focused, platform: platform3, onDeviceChange }) {
         setMode(MODES.LIST);
         return;
       }
-      if (key.tab || key.return) {
-        if (formField < fields.length - 1) {
-          setFormField((f) => f + 1);
-        } else {
-          setWorking(true);
-          try {
-            if (platform3 === "webos") {
-              await utils.addDevice(form);
-              setStatus({ ok: true, msg: `Device '${form.name}' added` });
-            } else {
-              const out = await utils.connectDevice({ host: form.host, port: parseInt(form.port) || void 0 });
-              setStatus({ ok: true, msg: out || `Connected to ${form.host}:${form.port}` });
-            }
-            await load2();
-            setMode(MODES.LIST);
-          } catch (e) {
-            setStatus({ ok: false, msg: e.message });
-          }
-          setWorking(false);
+      const goBack = key.upArrow || key.shift && key.tab;
+      const goNext = !goBack && (key.tab || key.return && formField < fields.length - 1);
+      const submit = !goBack && key.return && formField === fields.length - 1;
+      if (goBack) {
+        setFormField((f) => Math.max(0, f - 1));
+        return;
+      }
+      if (goNext) {
+        setFormField((f) => Math.min(fields.length - 1, f + 1));
+        return;
+      }
+      if (submit) {
+        const missingName = platform3 === "webos" && !form.name.trim();
+        const missingHost = !form.host.trim();
+        if (missingName) {
+          setStatus({ ok: false, msg: "Name is required" });
+          return;
         }
+        if (missingHost) {
+          setStatus({ ok: false, msg: "Host is required" });
+          return;
+        }
+        setWorking(true);
+        try {
+          if (platform3 === "webos") {
+            await utils.addDevice(form);
+            setStatus({ ok: true, msg: `Device '${form.name}' added` });
+          } else {
+            const out = await utils.connectDevice({ host: form.host, port: parseInt(form.port) || void 0 });
+            setStatus({ ok: true, msg: out || `Connected to ${form.host}:${form.port}` });
+          }
+          await load2();
+          setMode(MODES.LIST);
+        } catch (e) {
+          setStatus({ ok: false, msg: e.message });
+        }
+        setWorking(false);
       }
     }
     if (mode === MODES.CONFIRM_REMOVE) {
@@ -41712,7 +41729,7 @@ function Devices({ focused, platform: platform3, onDeviceChange }) {
       onChange: (v) => setForm((f) => ({ ...f, [field]: v })),
       placeholder: field === "port" ? platform3 === "tizen" ? "26101" : "5555" : `Enter ${field}...`
     }
-  ) : /* @__PURE__ */ import_react29.default.createElement(Text, { color: "white" }, form[field] || /* @__PURE__ */ import_react29.default.createElement(Text, { dimColor: true }, "(empty)")))), /* @__PURE__ */ import_react29.default.createElement(Text, { dimColor: true }, "Tab/Enter next  Last field Enter submits  Esc cancel")), mode === MODES.CONFIRM_REMOVE && devices[cursor] && /* @__PURE__ */ import_react29.default.createElement(Box_default, { borderStyle: "round", borderColor: "red", paddingX: 2, paddingY: 1 }, /* @__PURE__ */ import_react29.default.createElement(Text, { color: "red" }, removeLabel, " "), /* @__PURE__ */ import_react29.default.createElement(Text, { bold: true, color: "white" }, devices[cursor].name ?? devices[cursor].serial), /* @__PURE__ */ import_react29.default.createElement(Text, { color: "red" }, "? "), /* @__PURE__ */ import_react29.default.createElement(Text, { color: "yellow" }, "[y] Yes  [n] No")));
+  ) : /* @__PURE__ */ import_react29.default.createElement(Text, { color: "white" }, form[field] || /* @__PURE__ */ import_react29.default.createElement(Text, { dimColor: true }, "(empty)")))), /* @__PURE__ */ import_react29.default.createElement(Text, { dimColor: true }, "Tab/\u2193 next  \u2191 back  Last field Enter submits  Esc cancel")), mode === MODES.CONFIRM_REMOVE && devices[cursor] && /* @__PURE__ */ import_react29.default.createElement(Box_default, { borderStyle: "round", borderColor: "red", paddingX: 2, paddingY: 1 }, /* @__PURE__ */ import_react29.default.createElement(Text, { color: "red" }, removeLabel, " "), /* @__PURE__ */ import_react29.default.createElement(Text, { bold: true, color: "white" }, devices[cursor].name ?? devices[cursor].serial), /* @__PURE__ */ import_react29.default.createElement(Text, { color: "red" }, "? "), /* @__PURE__ */ import_react29.default.createElement(Text, { color: "yellow" }, "[y] Yes  [n] No")));
 }
 
 // src/screens/Generate.js
@@ -42739,6 +42756,20 @@ function App2() {
 }
 
 // src/index.js
+var nodeMajor = parseInt(process.versions.node.split(".")[0], 10);
+if (nodeMajor < 18) {
+  process.stderr.write(`
+  [tvdev] Node.js ${process.versions.node} is not supported. Upgrade to Node 18 LTS or newer.
+
+`);
+  process.exit(1);
+}
+if (nodeMajor % 2 !== 0) {
+  process.stderr.write(`
+  [tvdev] Warning: Node.js ${process.versions.node} is an odd (non-LTS) release. Some platform tools may be unstable. Recommended: Node 18, 20, or 22 LTS.
+
+`);
+}
 render_default(/* @__PURE__ */ import_react41.default.createElement(App2, null), { exitOnCtrlC: false });
 /*! Bundled license information:
 

@@ -153,6 +153,12 @@ NODE_MAJOR=$(node --version | sed 's/v//' | cut -d. -f1)
 
 ok "Node.js $(node --version)"
 
+# Warn on odd (non-LTS) Node versions — some platform tools are unstable on them
+if [ $((NODE_MAJOR % 2)) -ne 0 ]; then
+  warn "Node.js $(node --version) is an odd/non-LTS release. Platform tools (ares-cli, sdb) may be unstable."
+  warn "Recommended: Node 18, 20, or 22 LTS — switch with: nvm use --lts"
+fi
+
 # ── Download binary from GitHub release ───────────────────────────────────────
 step "Downloading ${BIN} ${RELEASE_TAG}"
 
@@ -213,10 +219,19 @@ step "Checking and installing platform-specific tools"
 
 install_ares_cli() {
   info "Installing ares-cli via npm..."
-  if npm install -g @webosose/ares-cli 2>&1 | grep -v "^npm warn" | grep -v "^$"; then
-    ok "ares-cli (LG webOS) installed → $(command -v ares-setup-device 2>/dev/null || echo 'reload shell')"
+  # If nvm is active, install under the LTS alias so it's available regardless of active version
+  if command -v nvm &>/dev/null 2>&1 || [ -s "${NVM_DIR:-$HOME/.nvm}/nvm.sh" ]; then
+    [ -s "${NVM_DIR:-$HOME/.nvm}/nvm.sh" ] && source "${NVM_DIR:-$HOME/.nvm}/nvm.sh"
+    # Install under current nvm version and also alias for cross-version availability
+    npm install -g @webosose/ares-cli 2>&1 | grep -v "^npm warn" | grep -v "^$" || true
+    ok "ares-cli installed under Node $(node --version)"
+    info "Note: with nvm, npm globals are per Node version. Switch versions with: nvm use <version>"
   else
-    warn "ares-cli install failed — run manually: npm install -g @webosose/ares-cli"
+    if npm install -g @webosose/ares-cli 2>&1 | grep -v "^npm warn" | grep -v "^$"; then
+      ok "ares-cli (LG webOS) installed → $(command -v ares-setup-device 2>/dev/null || echo 'reload shell')"
+    else
+      warn "ares-cli install failed — run manually: npm install -g @webosose/ares-cli"
+    fi
   fi
 }
 
@@ -254,15 +269,6 @@ install_adb() {
   fi
 }
 
-install_inputd_cli() {
-  info "Installing inputd-cli via npm..."
-  if npm install -g inputd-cli 2>&1 | grep -v "^npm warn" | grep -v "^$"; then
-    ok "inputd-cli (Fire TV input) installed"
-  else
-    warn "inputd-cli install failed — optional tool, skip if not needed"
-  fi
-}
-
 # ares-cli (LG webOS) — auto-install via npm
 if command -v ares-setup-device &>/dev/null; then
   ok "ares-cli  (LG webOS) → $(command -v ares-setup-device)"
@@ -286,12 +292,11 @@ else
   install_adb
 fi
 
-# inputd-cli (optional Fire TV input simulation) — auto-install via npm
+# inputd-cli — not available on npm; skip silently
 if command -v inputd-cli &>/dev/null; then
   ok "inputd-cli (Fire TV input) → $(command -v inputd-cli)"
 else
-  warn "inputd-cli (Fire TV input) not found — installing..."
-  install_inputd_cli
+  info "inputd-cli (Fire TV input) — optional, not on npm. Install manually if needed."
 fi
 
 # ── Done ──────────────────────────────────────────────────────────────────────

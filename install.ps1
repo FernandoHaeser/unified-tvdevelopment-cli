@@ -144,6 +144,12 @@ if ($nodeMajor -lt $RequiredNodeMajor) {
 
 Write-Ok "Node.js v$nodeVer"
 
+# Warn on odd (non-LTS) Node versions
+if ($nodeMajor % 2 -ne 0) {
+  Write-Warn "Node.js v$nodeVer is an odd/non-LTS release. Platform tools (ares-cli, sdb) may be unstable."
+  Write-Warn "Recommended: Node 18, 20, or 22 LTS — download from https://nodejs.org"
+}
+
 # ── Download binary from GitHub release ───────────────────────────────────────
 Write-Step "Downloading $Bin $ReleaseTag"
 
@@ -254,12 +260,11 @@ if (Test-Command "adb") {
   Install-AdbViaWinget
 }
 
-# inputd-cli (optional Fire TV input simulation) — auto-install via npm
+# inputd-cli — not available on npm; skip silently
 if (Test-Command "inputd-cli") {
   Write-Ok "inputd-cli (Fire TV input) — found"
 } else {
-  Write-Warn "inputd-cli (Fire TV input) not found — installing..."
-  Install-NpmPackage "inputd-cli" "inputd-cli"
+  Write-Info "inputd-cli (Fire TV input) — optional, not on npm. Install manually if needed."
 }
 
 # ── Done ──────────────────────────────────────────────────────────────────────
